@@ -30,6 +30,8 @@ function App() {
   const [evmAddress, setEvmAddress] = useState("");
   const [evmBalance, setEvmBalance] = useState(0);
   const [reverseTransaction, setReverseTransaction] = useState(false);
+  const [status, setStatus] = useState("op");
+  const [network, setNetwork] = useState("Testnet");
 
   // const [orders, setOrders] = useState(new Map<number, OrderbookOrder>{});
   const pollingInterval = 5000;
@@ -78,10 +80,20 @@ function App() {
     const _address = await si_gner.getAddress();
     console.log(_address);
     setEvmAddress(_address);
+    const contract = new ethers.Contract(
+      "0xaD9d14CA82d9BF97fFf745fFC7d48172A1c0969E",
+      ERC20ABI,
+      provider
+    );
+    const _balance = await contract.balanceOf(evmAddress);
+    console.log("o == " + Number(_balance) / 100000000);
+    const bal = Number(_balance) / 100000000;
+    setEvmBalance(bal);
     setChangeWalletStatus({ ...changeWalletStatus, evmWallet: true });
   };
 
   const order_book = async (ammo) => {
+    setStatus("Pending.....");
     const orderbook = await Orderbook.init({
       url: TESTNET_ORDERBOOK_API, // add this line only for testnet
       signer,
@@ -127,9 +139,12 @@ function App() {
       const arr = [];
       arr.push(orders);
       [...new Set(arr)];
-      // console.log("ko +++ "+     JSON.stringify(orders)
-      // +"++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-      // orders.map(val=>console.log("ID *********** = "+val.ID))
+      console.log(
+        "ko +++ " +
+          JSON.stringify(orders) +
+          "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+      );
+      orders.map((val) => console.log("ID *********** = " + val.ID));
       const order = orders.filter((order) => order.ID === orderId)[0];
       console.log("OOOOrder === ", order);
       if (!order) return;
@@ -142,6 +157,8 @@ function App() {
       ) {
         const swapper = garden.getSwap(order);
         const swapOutput = await swapper.next();
+        if (swapOutput.action.toLocaleLowerCase() == "redeem")
+          setStatus("Successful");
         console.log(
           `Completed Action ${swapOutput.action} with transaction hash: ${swapOutput.output}`
         );
@@ -177,6 +194,16 @@ function App() {
     );
     const _balance = await contract.balanceOf(evmAddress);
     console.log("meow == " + Number(_balance) / 100000000);
+    const bal = Number(_balance) / 100000000;
+    setEvmBalance(bal);
+    const _Bbalance = await bitcoinWallet.getBalance();
+    console.log("Price --------------- " + _Bbalance);
+    setBitcoinBalance(_Bbalance / 100000000);
+  };
+
+  const swittchNetwork = async (net) => {
+    if (net == "Testnet") setNetwork("Localnet");
+    if (net == "Localnet") setNetwork("Testnet");
   };
 
   return (
@@ -184,32 +211,11 @@ function App() {
       {/* <button className='bg-orange-600 border-black border-2 rounded-lg' onClick={bitcoin_wallet}>Bitcoin Wallet</button>
      <button className='bg-orange-600 border-black border-2 rounded-lg' onClick={ethereum_wallet}>EVM Wallet</button>
      <button className='bg-orange-600 bordeyr-black border-2 rounded-lg' onClick={order_book}>Transaction</button> */}
-      <div className="flex flex-col mx-10 my-6">
-        <div className="w-1/2 border-2 border-black rounded-lg border-solid ">
-          <table className="w-full border border-gray-300 rounded-lg overflow-hidden">
-            <tr>
-              <th className="w-[140px] border px-4 py-2 border-gray-300 bg-gray-200">
-                Bitcoin Wallet
-              </th>
-              <td className="border px-4 py-2">{bitcoinAddress}</td>
-              <th className="w-[92px] border px-4 py-2 border-gray-300 bg-gray-200">
-                Balance
-              </th>
-              <td className="border px-4 py-2">{bitcoinBalance}</td>
-            </tr>
-            <tr>
-              <th className="w-[140px] border px-4 py-2 border-gray-300 bg-gray-200">
-                EVM Wallet
-              </th>
-              <td className="border px-4 py-2">{evmAddress}</td>
-              <th className="w-[92px] border px-4 py-2 border-gray-300 bg-gray-200">
-                Balance
-              </th>
-              <td className="border px-4 py-2">{evmBalance}</td>
-            </tr>
-          </table>
-        </div>
-        <div className="border-black border-2 border-solid rounded-lg flex flex-col w-[700px] justify-center items-center gap-10 py-8 mt-20">
+      <div className="flex justify-center items-center mx-10 my-20">
+        <h1 className="text-2xl underline">{network}</h1>
+      </div>
+      <div className="flex justify-center gap-16  mx-10 my-20">
+        <div className="border-black border-2 border-solid rounded-lg flex flex-col w-[700px] justify-center items-center gap-10 py-8">
           <div className="flex flex-col w-[600px] gap-4">
             {changeWalletStatus.bitcoinWallet == true ? (
               <p className="w-72 border-black border-2 border-solid rounded-lg	p-2 flex justify-center items-center text-xl font-medium">
@@ -238,9 +244,21 @@ function App() {
           </div>
           <div className="flex flex-col border-2 border-black w-[600px] gap-6 px-10 py-6 rounded-lg">
             <label htmlFor="name" className="text-4xl font-medium">
-              {reverseTransaction == true
-                ? "WBTC -- TO --> BTC"
-                : "BTC -- TO --> WBTC"}
+              {reverseTransaction == true ? (
+                <h1 className="flex gap-3">
+                  WBTC
+                  <img src="https://testnet.garden.finance/_next/static/media/wbtc.f5523e46.svg" />{" "}
+                  -- TO --{">"} BTC
+                  <img src="https://testnet.garden.finance/_next/static/media/btc.cb05590c.svg" />
+                </h1>
+              ) : (
+                <h1 className="flex gap-3">
+                  BTC
+                  <img src="https://testnet.garden.finance/_next/static/media/btc.cb05590c.svg" />{" "}
+                  -- TO --{">"} WBTC
+                  <img src="https://testnet.garden.finance/_next/static/media/wbtc.f5523e46.svg" />
+                </h1>
+              )}
             </label>
             <input
               type="number"
@@ -268,6 +286,49 @@ function App() {
           >
             Initiate{" "}
           </button>
+        </div>
+        <div className="flex flex-col gap-10">
+          <div className="w-[800px] h-[87px] border-2 border-black rounded-lg border-solid ">
+            <table className="w-full border border-gray-300 rounded-lg overflow-hidden">
+              <tr>
+                <th className="w-[140px] border px-4 py-2 border-gray-300 bg-gray-200">
+                  Bitcoin Wallet
+                </th>
+                <td className="border px-4 py-2">{bitcoinAddress}</td>
+                <th className="w-[92px] border px-4 py-2 border-gray-300 bg-gray-200">
+                  Balance
+                </th>
+                <td className="border px-4 py-2">{bitcoinBalance}</td>
+              </tr>
+              <tr>
+                <th className="w-[140px] border px-4 py-2 border-gray-300 bg-gray-200">
+                  EVM Wallet
+                </th>
+                <td className="border px-4 py-2">{evmAddress}</td>
+                <th className="w-[92px] border px-4 py-2 border-gray-300 bg-gray-200">
+                  Balance
+                </th>
+                <td className="border px-4 py-2">{evmBalance}</td>
+              </tr>
+            </table>
+          </div>
+          <div>
+            <h1 className="text-xl">
+              Transaction -----{">"} {status}
+            </h1>
+          </div>
+          <div>
+            <div className="pl-96">
+              <button
+                className="border-black border-2 border-solid rounded-lg	p-2 text-xl"
+                onClick={() => {
+                  swittchNetwork(network);
+                }}
+              >
+                🖙 Switch To {network == "Testnet" ? "Localnet" : "Testnet"}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </>

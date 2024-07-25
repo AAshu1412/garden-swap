@@ -31,7 +31,7 @@ function App() {
   const [evmBalance, setEvmBalance] = useState(0);
   const [reverseTransaction, setReverseTransaction] = useState(false);
   const [status, setStatus] = useState("op");
-  const [network, setNetwork] = useState("Testnet");
+  const [network, setNetwork] = useState("Swap Faucet");
 
   // const [orders, setOrders] = useState(new Map<number, OrderbookOrder>{});
   const pollingInterval = 5000;
@@ -317,7 +317,7 @@ function App() {
               Transaction -----{">"} {status}
             </h1>
           </div>
-          <div>
+          {/* <div>
             <div className="pl-96">
               <button
                 className="border-black border-2 border-solid rounded-lg	p-2 text-xl"
@@ -328,7 +328,7 @@ function App() {
                 🖙 Switch To {network == "Testnet" ? "Localnet" : "Testnet"}
               </button>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
     </>

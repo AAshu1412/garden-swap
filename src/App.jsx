@@ -16,6 +16,7 @@ import {
 import { GardenJS } from "@gardenfi/core";
 import { JsonRpcProvider, Wallet, ethers } from "ethers";
 import { ERC20ABI } from "./erc20";
+import Ripples from "react-ripples";
 
 function App() {
   const [bitcoinWallet, setBitcoinWallet] = useState(null);
@@ -30,20 +31,23 @@ function App() {
   const [evmAddress, setEvmAddress] = useState("");
   const [evmBalance, setEvmBalance] = useState(0);
   const [reverseTransaction, setReverseTransaction] = useState(false);
-  const [status, setStatus] = useState("op");
-  const [network, setNetwork] = useState("Swap Faucet");
+  const [status, setStatus] = useState("");
+  const [network, setNetwork] = useState("Testnet");
+  const [privateKey, setPrivateKey] = useState("");
+  const [donePrivateKey, setDonePrivateKey] = useState("");
 
   // const [orders, setOrders] = useState(new Map<number, OrderbookOrder>{});
   const pollingInterval = 5000;
+
   useEffect(() => {
-    sepolia_balance();
+    sepolia_balance(); // Initial call to the function
     const interval = setInterval(sepolia_balance, pollingInterval); // Set up polling
     return () => clearInterval(interval); // Clear interval on component unmount
   }, []);
 
-  const bitcoin_wallet = async () => {
+  const bitcoin_wallet = async (iddd) => {
     const bitcoin_Wallet = BitcoinWallet.fromWIF(
-      "",
+      iddd,
       new BitcoinProvider(BitcoinNetwork.Testnet)
     );
     const _balance = await bitcoin_Wallet.getBalance();
@@ -68,7 +72,7 @@ function App() {
   //   console.log("lllll === ", si_gner);
   //   // console.log(si_gner,evm_Wallet);
   // };
-
+  const [oo, setOO] = useState(false);
   const ethereum__wallet = async () => {
     const provider = new ethers.BrowserProvider(window.ethereum);
     await window.ethereum.request({ method: "eth_requestAccounts" });
@@ -80,18 +84,14 @@ function App() {
     const _address = await si_gner.getAddress();
     console.log(_address);
     setEvmAddress(_address);
-    const contract = new ethers.Contract(
-      "0xaD9d14CA82d9BF97fFf745fFC7d48172A1c0969E",
-      ERC20ABI,
-      provider
-    );
-    const _balance = await contract.balanceOf(evmAddress);
-    console.log("o == " + Number(_balance) / 100000000);
-    const bal = Number(_balance) / 100000000;
-    setEvmBalance(bal);
+    sepolia_balance();
+
     setChangeWalletStatus({ ...changeWalletStatus, evmWallet: true });
   };
-
+  useEffect(() => {
+    // Code here will run only once when the component is mounted
+    sepolia_balance();
+  }, [ethereum__wallet]); // Empty dependency array
   const order_book = async (ammo) => {
     setStatus("Pending.....");
     const orderbook = await Orderbook.init({
@@ -180,6 +180,17 @@ function App() {
     // console.log(btcTOwbtc.name);
     // console.log(btcTOwbtc.category);
   };
+  const handleInput2 = (event) => {
+    // const name = event.target.name;
+    const value = event.target.value;
+    console.log(value);
+    setPrivateKey(value);
+  };
+  const setBPrivateKey = () => {
+    // const name = event.target.name;
+    setDonePrivateKey(privateKey);
+    console.log("awfawf : " + privateKey);
+  };
 
   const reverse = () => {
     setReverseTransaction(!reverseTransaction);
@@ -212,36 +223,86 @@ function App() {
      <button className='bg-orange-600 border-black border-2 rounded-lg' onClick={ethereum_wallet}>EVM Wallet</button>
      <button className='bg-orange-600 bordeyr-black border-2 rounded-lg' onClick={order_book}>Transaction</button> */}
       <div className="flex justify-center items-center mx-10 my-20">
-        <h1 className="text-2xl underline">{network}</h1>
+        <h1 className="text-2xl underline">Swap Faucet</h1>
       </div>
-      <div className="flex justify-center gap-16  mx-10 my-20">
+      <div className="mx-36 flex flex-col gap-2">
+        <div>
+          <h1 className="text-xl">
+            Enter Private key of your Bitcoin testnet for setup the connection
+          </h1>
+        </div>
+        <div className="flex gap-4">
+          <input
+            type="password"
+            autoComplete="off"
+            value={privateKey}
+            onChange={handleInput2}
+            placeholder="BTC Testnet Private Key"
+            className="border-black border-2 border-solid p-1 rounded-lg w-[500px] text-xl"
+          />
+          <Ripples color="black" during={1200} placeholder={"Random Anything"}>
+            {" "}
+            <button
+              className="w-20 border-black border-2 border-solid rounded-lg p-1 text-xl"
+              onClick={setBPrivateKey}
+            >
+              Set
+            </button>
+          </Ripples>
+        </div>
+      </div>
+      <div className="flex justify-center gap-16  mx-10 my-8">
         <div className="border-black border-2 border-solid rounded-lg flex flex-col w-[700px] justify-center items-center gap-10 py-8">
-          <div className="flex flex-col w-[600px] gap-4">
-            {changeWalletStatus.bitcoinWallet == true ? (
-              <p className="w-72 border-black border-2 border-solid rounded-lg	p-2 flex justify-center items-center text-xl font-medium">
-                Bitcoin Wallet Connected ✅
+          <div className="flex w-[600px] gap-6">
+            <div className="flex flex-col  gap-4">
+              {changeWalletStatus.bitcoinWallet == true ? (
+                <p className="w-72 border-black border-2 border-solid rounded-lg	p-2 flex justify-center items-center text-xl font-medium">
+                  Bitcoin Wallet Connected ✅
+                </p>
+              ) : (
+                <Ripples
+                  color="black"
+                  during={1200}
+                  placeholder={"Random Anything"}
+                >
+                  {" "}
+                  <button
+                    onClick={() => {
+                      bitcoin_wallet(donePrivateKey);
+                    }}
+                    className="w-72 border-black border-2 border-solid rounded-lg	p-2 text-xl font-medium"
+                  >
+                    Bitcoin Wallet Connect
+                  </button>
+                </Ripples>
+              )}
+              {changeWalletStatus.evmWallet == true ? (
+                <p className="w-80 border-black border-2 border-solid rounded-lg	p-2 flex justify-center items-center text-xl font-medium">
+                  Ethereum Wallet Connected ✅
+                </p>
+              ) : (
+                <Ripples
+                  color="black"
+                  during={1200}
+                  placeholder={"Random Anything"}
+                >
+                  {" "}
+                  <button
+                    onClick={ethereum__wallet}
+                    className="w-72 border-black border-2 border-solid rounded-lg	p-2 text-xl font-medium"
+                  >
+                    Ethereum Wallet Connect
+                  </button>
+                </Ripples>
+              )}
+            </div>
+            <div>
+              <p className="w-72 border-black border-2 border-solid rounded-lg	p-2 text-xl font-medium text-center">
+                {network}🟢
               </p>
-            ) : (
-              <button
-                onClick={bitcoin_wallet}
-                className="w-72 border-black border-2 border-solid rounded-lg	p-2 text-xl font-medium"
-              >
-                Bitcoin Wallet Connect
-              </button>
-            )}
-            {changeWalletStatus.evmWallet == true ? (
-              <p className="w-80 border-black border-2 border-solid rounded-lg	p-2 flex justify-center items-center text-xl font-medium">
-                Ethereum Wallet Connected ✅
-              </p>
-            ) : (
-              <button
-                onClick={ethereum__wallet}
-                className="w-72 border-black border-2 border-solid rounded-lg	p-2 text-xl font-medium"
-              >
-                Ethereum Wallet Connect
-              </button>
-            )}
+            </div>
           </div>
+
           <div className="flex flex-col border-2 border-black w-[600px] gap-6 px-10 py-6 rounded-lg">
             <label htmlFor="name" className="text-4xl font-medium">
               {reverseTransaction == true ? (
@@ -271,21 +332,31 @@ function App() {
           </div>
 
           <div className="w-[600px] border-black border-2 rounded-lg h-20 flex justify-center items-center">
+            <Ripples
+              color="black"
+              during={1200}
+              placeholder={"Random Anything"}
+            >
+              {" "}
+              <button
+                onClick={reverse}
+                className="w-72 border-black border-2 border-solid rounded-lg	p-2 text-xl font-medium"
+              >
+                Reverse
+              </button>
+            </Ripples>
+          </div>
+          <Ripples color="black" during={1200} placeholder={"Random Anything"}>
+            {" "}
             <button
-              onClick={reverse}
+              onClick={() => {
+                order_book(btcTOwbtc);
+              }}
               className="w-72 border-black border-2 border-solid rounded-lg	p-2 text-xl font-medium"
             >
-              Reverse
+              Initiate{" "}
             </button>
-          </div>
-          <button
-            onClick={() => {
-              order_book(btcTOwbtc);
-            }}
-            className="w-72 border-black border-2 border-solid rounded-lg	p-2 text-xl font-medium"
-          >
-            Initiate{" "}
-          </button>
+          </Ripples>
         </div>
         <div className="flex flex-col gap-10">
           <div className="w-[800px] h-[87px] border-2 border-black rounded-lg border-solid ">
@@ -314,21 +385,28 @@ function App() {
           </div>
           <div>
             <h1 className="text-xl">
-              Transaction -----{">"} {status}
+              Transaction {"(Status)"} -----{">"} {status}
             </h1>
           </div>
-          {/* <div>
+          <div>
             <div className="pl-96">
-              <button
-                className="border-black border-2 border-solid rounded-lg	p-2 text-xl"
-                onClick={() => {
-                  swittchNetwork(network);
-                }}
+              <Ripples
+                color="black"
+                during={1200}
+                placeholder={"Random Anything"}
               >
-                🖙 Switch To {network == "Testnet" ? "Localnet" : "Testnet"}
-              </button>
+                {" "}
+                <button
+                  className="border-black border-2 border-solid rounded-lg	p-2 text-xl"
+                  onClick={() => {
+                    swittchNetwork(network);
+                  }}
+                >
+                  🖙 Switch To {network == "Testnet" ? "Localnet" : "Testnet"}
+                </button>
+              </Ripples>
             </div>
-          </div> */}
+          </div>
         </div>
       </div>
     </>
